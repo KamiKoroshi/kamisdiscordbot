@@ -15,8 +15,9 @@ public class Main {
 
     public static void main(String[] args) {
         try {
+            // Using a java class called props.java for this temporarily
             jda = new JDABuilder(AccountType.BOT)
-                    .setToken("NDg2MjEyMjA5ODk1Mjc2NTQ0.Dm8EEA.x5OayB06e7XLA8AU7ybn6lT79Gk")
+                    .setToken(props.getToken())
                     .setStatus(OnlineStatus.ONLINE)
                     .setAutoReconnect(false)
                     .buildBlocking();
@@ -30,7 +31,7 @@ public class Main {
     }
 
     public static boolean isCMD(String input) {
-        return input.startsWith("!");
+        return input.startsWith(prefix);
     }
 
 }
