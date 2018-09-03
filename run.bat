@@ -1,0 +1,1 @@
+start cmd /K java -jar kamisdiscordbot.jar console
