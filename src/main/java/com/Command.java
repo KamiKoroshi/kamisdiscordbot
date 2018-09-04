@@ -7,7 +7,10 @@ import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.exceptions.HierarchyException;
 import net.dv8tion.jda.core.managers.GuildController;
+import net.kronos.rkon.core.Rcon;
+import net.kronos.rkon.core.ex.AuthenticationException;
 
+import java.io.IOException;
 import java.util.List;
 
 public enum Command {
@@ -50,6 +53,71 @@ public enum Command {
             channel = event.getChannel();
             channel.sendMessage("QUITING!").queue();
             event.getJDA().shutdown();
+        }
+    },
+    RCON("[ip:port] \"[command]\"") {
+        @Override
+        public void execute(MessageReceivedEvent event) {
+            channel = event.getChannel();
+
+            String authorAsMention = event.getAuthor().getAsMention();
+            try {
+                String[] fullIP = event.getMessage().getContentRaw().split("\\s");
+
+                StringBuilder commandBuilder = new StringBuilder();
+                for (int i = 2; i < fullIP.length; i++) {
+                    commandBuilder.append(fullIP[i]).append(" ");
+                }
+                String command = commandBuilder.toString().trim();
+                if (command.matches("^\"[a-zA-Z0-9\\s'_]+\"") || command.matches("[a-z_]+")) {
+                    command = command.replaceAll("\"", "");
+                } else {
+                    channel.sendMessage(authorAsMention + ", this command is not valid.").queue();
+                    return;
+                }
+
+                boolean found = false;
+                String cmdName = command.split("\\s")[0];
+                System.out.println(cmdName);
+                for (RconCommand cmd : RconCommand.values()) {
+                    if (cmdName.equals(cmd.name().toLowerCase())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    channel.sendMessage(authorAsMention + ", this command does not exist or is restricted.").queue();
+                    return;
+                }
+
+                fullIP = fullIP[1].split(":");
+                String host = fullIP[0];
+                if (!host.matches("[0-9.]+")) {
+                    channel.sendMessage(authorAsMention + ", this is not a valid IP address.").queue();
+                    return;
+                }
+                int port = Integer.parseInt(fullIP[1]);
+                byte[] password = props.getRconData().get(host + ":" + port);
+                if (password == null) {
+                    channel.sendMessage(authorAsMention + ", this IP is not recognized.").queue();
+                    return;
+                }
+                Rcon rcon = new Rcon(host, port, password);
+                System.out.println("Connected successfully");
+
+                System.out.println(command);
+                String message = rcon.command(command);
+
+                channel.sendMessage(authorAsMention + ", " + message).queue();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (AuthenticationException e) {
+                channel.sendMessage(authorAsMention + ", " + e.getMessage()).queue();
+            } catch (ArrayIndexOutOfBoundsException e) {
+                channel.sendMessage(authorAsMention + ", wrong amount of arguments.").queue();
+            } catch (NumberFormatException e) {
+                channel.sendMessage(authorAsMention + ", this is not a valid Port.").queue();
+            }
         }
     };
 

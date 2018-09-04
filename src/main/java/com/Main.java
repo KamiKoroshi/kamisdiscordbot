@@ -14,6 +14,9 @@ public class Main {
     private static String prefix = "!";
 
     public static void main(String[] args) {
+        // Temp adding ip + password here
+        props.updateRcon();
+
         try {
             // Using a java class called props.java for this temporarily
             jda = new JDABuilder(AccountType.BOT)
